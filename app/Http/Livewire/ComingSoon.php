@@ -22,7 +22,7 @@ class ComingSoon extends Component
             where platforms = (48,49,130,6)
             & (first_release_date > {$current});
             sort first_release_date asc;
-            limit 4;",
+            limit 8;",
             'text/plain'
         )->post('https://api.igdb.com/v4/games')->json();
 
