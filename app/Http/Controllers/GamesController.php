@@ -111,7 +111,7 @@ public function index()
                 'text/plain'
             )
             ->post('https://api.igdb.com/v4/games')->json();
-        dump($game);
+      /*   dump($game); */
          abort_if(!$game, 404);
 
         return view('show', [
