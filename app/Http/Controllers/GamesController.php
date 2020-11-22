@@ -103,7 +103,7 @@ public function index()
             'Authorization' => (env('IGDB_ACCESS_TOKEN')),
         ])
             ->withBody(
-                "fields *, cover.url,irst_release_date, total_rating_count, platforms.abbreviation, url, websites, rating, slug, involved_companies.company.name, genres.name, websites.*,videos.*,screenshots.*,similar_games.slug,similar_games.rating,similar_games.platforms.abbreviation,similar_games.cover.url,similar_games.name,similar_games.platforms;
+                "fields *, cover.url,irst_release_date, total_rating_count, platforms.abbreviation, url, websites, rating,aggregated_rating_count, aggregate_rating, slug, involved_companies.company.name, genres.name, websites.*,videos.*,screenshots.*,similar_games.slug,similar_games.rating,similar_games.platforms.abbreviation,similar_games.cover.url,similar_games.name,similar_games.platforms;
                  where slug = \"{$slug}\";
                 
               
@@ -118,6 +118,7 @@ public function index()
             'game'=> $this->formatGameForView( $game[0]),
         ]);
 
+      
     }
 
      public function formatGameForView($game)
@@ -127,8 +128,8 @@ public function index()
                 'genres'=>collect($game['genres'])->pluck('name')->implode(', '),
                 'involved_companies'=>$game['involved_companies'][0]['company']['name'],
                 'platforms'=>collect($game['platforms'])->pluck('abbreviation')->implode(', '),
-                'memberRating'=> array_key_exists('rating', $game ) ? round($game['rating']).'%' : 'N/A',
-                'criticRating'=> array_key_exists('aggregate_rating', $game ) ? round($game['aggregate_rating']).'%' : 'N/A',
+                'memberRating'=> array_key_exists('rating', $game ) ? round($game['rating']) : '0',
+                'criticRating'=> array_key_exists('aggregated_rating', $game ) ? round($game['aggregated_rating']) : '0',
                 'trailer'=>'https://www.youtube.com/watch/'.$game['videos'][0]['video_id'],
                 'screenshots' => collect($game['screenshots'])->map(function ($screenshot){
                     return [
@@ -140,7 +141,7 @@ public function index()
                     return collect($game)->merge([
                         'coverImageUrl' => array_key_exists('cover',$game) ?
                         Str::replaceFirst('thumb','cover_big', $game['cover']['url']) : 'https://via.placeholder.com/264x352',
-                       'rating' => isset($game['rating']) ? round($game['rating']).'%' : null,
+                       'rating' => isset($game['rating']) ? round($game['rating']) : null,
                         'platforms' => array_key_exists('platforms', $game) ?
                         collect($game['platforms'])->pluck('abbreviation')->filter()->implode(', ') : null,
                     ]);
@@ -158,7 +159,9 @@ public function index()
                     })->first(),
                   
                 ]
+                  
             ]);
+           
         }
 
     /**
