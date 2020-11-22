@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Carbon\Carbon;
+use Illuminate\Support\Str;
 
 class GamesController extends Controller
 {
@@ -102,7 +103,7 @@ public function index()
             'Authorization' => (env('IGDB_ACCESS_TOKEN')),
         ])
             ->withBody(
-                "fields *, cover.url,irst_release_date, total_rating_count, platforms.abbreviation, rating, slug, involved_companies.company.name, genres.name, websites.*,videos.*,screenshots.*,similar_games.slug,similar_games.rating,similar_games.platforms.abbreviation,similar_games.cover.url,similar_games.name,similar_games.platforms;
+                "fields *, cover.url,irst_release_date, total_rating_count, platforms.abbreviation, url, websites, rating, slug, involved_companies.company.name, genres.name, websites.*,videos.*,screenshots.*,similar_games.slug,similar_games.rating,similar_games.platforms.abbreviation,similar_games.cover.url,similar_games.name,similar_games.platforms;
                  where slug = \"{$slug}\";
                 
               
@@ -114,11 +115,51 @@ public function index()
          abort_if(!$game, 404);
 
         return view('show', [
-            'game'=>$game[0],
+            'game'=> $this->formatGameForView( $game[0]),
         ]);
-     
 
     }
+
+     public function formatGameForView($game)
+        {
+            return collect($game)->merge([
+                'coverImageUrl' => Str::replaceFirst('thumb','cover_big', $game['cover']['url']),
+                'genres'=>collect($game['genres'])->pluck('name')->implode(', '),
+                'involved_companies'=>$game['involved_companies'][0]['company']['name'],
+                'platforms'=>collect($game['platforms'])->pluck('abbreviation')->implode(', '),
+                'memberRating'=> array_key_exists('rating', $game ) ? round($game['rating']).'%' : 'N/A',
+                'criticRating'=> array_key_exists('aggregate_rating', $game ) ? round($game['aggregate_rating']).'%' : 'N/A',
+                'trailer'=>'https://www.youtube.com/watch/'.$game['videos'][0]['video_id'],
+                'screenshots' => collect($game['screenshots'])->map(function ($screenshot){
+                    return [
+                        'big' => Str::replaceFirst('thumb','screenshot_big', $screenshot['url']),
+                        'huge' => Str::replaceFirst('thumb','screenshot_huge', $screenshot['url']),
+                    ];
+                })->take(9),
+                'similarGames'=>collect($game['similar_games'])->map(function ($game){
+                    return collect($game)->merge([
+                        'coverImageUrl' => array_key_exists('cover',$game) ?
+                        Str::replaceFirst('thumb','cover_big', $game['cover']['url']) : 'https://via.placeholder.com/264x352',
+                       'rating' => isset($game['rating']) ? round($game['rating']).'%' : null,
+                        'platforms' => array_key_exists('platforms', $game) ?
+                        collect($game['platforms'])->pluck('abbreviation')->filter()->implode(', ') : null,
+                    ]);
+                })->take(6),
+                'social'=> [
+                    'website'=> collect($game['websites'])->first(),
+                    'facebook'=> collect($game['websites'])->filter(function ($website){
+                        return Str::contains($website['url'],'facebook');
+                    })->first(),
+                    'instagram'=> collect($game['websites'])->filter(function ($website){
+                        return Str::contains($website['url'],'instagram');
+                    })->first(),
+                    'twitter'=> collect($game['websites'])->filter(function ($website){
+                        return Str::contains($website['url'],'twitter');
+                    })->first(),
+                  
+                ]
+            ]);
+        }
 
     /**
      * Show the form for editing the specified resource.

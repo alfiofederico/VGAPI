@@ -6,6 +6,7 @@ use Livewire\Component;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Str;
 
 class HighestRatedGames extends Component
 {
@@ -15,7 +16,7 @@ class HighestRatedGames extends Component
     {
         $before=Carbon::now()->subMonths(2)->timestamp;
         $after=Carbon::now()->addMonths(2)->timestamp;
-         $this->highestRatedGames = Http::withHeaders([
+         $highestRatedGamesUnformatted = Http::withHeaders([
             'Client-ID' => env('IGDB_CLIENT_ID'),
             'Authorization' => (env('IGDB_ACCESS_TOKEN')),
         ])
@@ -26,17 +27,32 @@ class HighestRatedGames extends Component
                 & first_release_date <  {$after}
                 & total_rating_count > 5);
                 sort total_rating_count desc;
-                limit 12;",
+                limit 18;",
                 'text/plain'
             )
             ->post('https://api.igdb.com/v4/games')->json();
 
        /*  dump($highestRatedGames); */
 
+    //    dump($this->formatForView($highestRatedGamesUnformatted));
+       $this->highestRatedGames = $this->formatForView($highestRatedGamesUnformatted);
     }
+
+
     
     public function render()
     {
         return view('livewire.highest-rated-games');
+    }
+
+    public function formatForView($games)
+    {
+        return collect($games)->map(function($game){
+            return collect($game)->merge([
+                'coverImageUrl' => Str::replaceFirst('thumb','cover_big', $game['cover']['url']),
+                'rating' => isset($game['rating']) ? round($game['rating']).'%' : null,
+                'platforms' => collect($game['platforms'])->pluck('abbreviation')->filter()->implode(', '),
+            ]);
+        })->toArray();
     }
 }
