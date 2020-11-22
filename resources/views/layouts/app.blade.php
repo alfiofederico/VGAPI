@@ -15,11 +15,11 @@
                 <a href="/">
                    <h2 class="text-blue-500 uppercase tracking-wide font-semibold">VG</h2>
                 </a>
-                <ul class="flex ml-0 lg:ml-16 space-x-8 mt-6 lg:mt-0">
+{{--                 <ul class="flex ml-0 lg:ml-16 space-x-8 mt-6 lg:mt-0">
                     <li><a href="#" class="hover:text-gray-400">Games</a></li>
                     <li><a href="#" class="hover:text-gray-400">Reviews</a></li>
                     <li><a href="#" class="hover:text-gray-400">Coming Soon</a></li>
-                </ul>
+                </ul> --}}
             </div>
             <div class="flex items-center mt-6 lg:mt-0">
                 <livewire:search-dropdown>
