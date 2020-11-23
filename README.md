@@ -8,7 +8,7 @@ To run it:
 -Composer install
 -npm install
 -Get the token via Twitch: instructions here: https://api-docs.igdb.com/#about
-
+-Site is live here: http://vgapi.herokuapp.com/
 
 
 
