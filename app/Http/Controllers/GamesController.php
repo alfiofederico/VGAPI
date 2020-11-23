@@ -111,7 +111,7 @@ public function index()
                 'text/plain'
             )
             ->post('https://api.igdb.com/v4/games')->json();
-      /*   dump($game); */
+         dump($game);
          abort_if(!$game, 404);
 
         return view('show', [
@@ -125,13 +125,15 @@ public function index()
         {
             return collect($game)->merge([
                 'coverImageUrl' => Str::replaceFirst('thumb','cover_big', $game['cover']['url']),
-                'genres'=>collect($game['genres'])->pluck('name')->implode(', '),
-                'involved_companies'=>$game['involved_companies'][0]['company']['name'],
+                'genres'=>array_key_exists('genres',$game)?collect($game['genres'])->pluck('name')->implode(', '):'N/A',
+                'involved_companies'=>array_key_exists('involved_companies',$game)?$game['involved_companies'][0]['company']['name']:'N/A', 
+                
                 'platforms'=>collect($game['platforms'])->pluck('abbreviation')->implode(', '),
                 'memberRating'=> array_key_exists('rating', $game ) ? round($game['rating']) : '0',
                 'criticRating'=> array_key_exists('aggregated_rating', $game ) ? round($game['aggregated_rating']) : '0',
-                'trailer'=>'https://www.youtube.com/embed/'.$game['videos'][0]['video_id'],
-                'screenshots' => collect($game['screenshots'])->map(function ($screenshot){
+                // 'trailer'=>'https://www.youtube.com/embed/'.$game['videos'][0]['video_id'],
+                'trailer'=>isset($game['videos'])?'https://www.youtube.com/embed/'.$game['videos'][0]['video_id']:null,
+                'screenshots' =>collect($game['screenshots'])->map(function ($screenshot){
                     return [
                         'big' => Str::replaceFirst('thumb','screenshot_big', $screenshot['url']),
                         'huge' => Str::replaceFirst('thumb','screenshot_huge', $screenshot['url']),
@@ -147,16 +149,16 @@ public function index()
                     ]);
                 })->take(6),
                 'social'=> [
-                    'website'=> collect($game['websites'])->first(),
-                    'facebook'=> collect($game['websites'])->filter(function ($website){
+                    'website'=>array_key_exists('websites',$game)?collect($game['websites'])->first():null,
+                    'facebook'=>array_key_exists('websites',$game)? collect($game['websites'])->filter(function ($website){
                         return Str::contains($website['url'],'facebook');
-                    })->first(),
-                    'instagram'=> collect($game['websites'])->filter(function ($website){
+                    })->first():null,
+                    'instagram'=>array_key_exists('websites',$game)? collect($game['websites'])->filter(function ($website){
                         return Str::contains($website['url'],'instagram');
-                    })->first(),
-                    'twitter'=> collect($game['websites'])->filter(function ($website){
+                    })->first():null,
+                    'twitter'=>array_key_exists('websites',$game)? collect($game['websites'])->filter(function ($website){
                         return Str::contains($website['url'],'twitter');
-                    })->first(),
+                    })->first():null,
                   
                 ]
                   
