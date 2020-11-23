@@ -111,7 +111,7 @@ public function index()
                 'text/plain'
             )
             ->post('https://api.igdb.com/v4/games')->json();
-         dump($game);
+         /* dump($game); */
          abort_if(!$game, 404);
 
         return view('show', [
@@ -122,33 +122,53 @@ public function index()
     }
 
      public function formatGameForView($game)
-        {
-            return collect($game)->merge([
-                'coverImageUrl' => Str::replaceFirst('thumb','cover_big', $game['cover']['url']),
-                'genres'=>array_key_exists('genres',$game)?collect($game['genres'])->pluck('name')->implode(', '):'N/A',
-                'involved_companies'=>array_key_exists('involved_companies',$game)?$game['involved_companies'][0]['company']['name']:'N/A', 
-                
-                'platforms'=>collect($game['platforms'])->pluck('abbreviation')->implode(', '),
-                'memberRating'=> array_key_exists('rating', $game ) ? round($game['rating']) : '0',
-                'criticRating'=> array_key_exists('aggregated_rating', $game ) ? round($game['aggregated_rating']) : '0',
-                // 'trailer'=>'https://www.youtube.com/embed/'.$game['videos'][0]['video_id'],
-                'trailer'=>isset($game['videos'])?'https://www.youtube.com/embed/'.$game['videos'][0]['video_id']:null,
-                'screenshots' =>collect($game['screenshots'])->map(function ($screenshot){
+     {
+        return collect($game)->merge([
+            'coverImageUrl' => isset($game['cover'])
+                ? Str::replaceFirst('thumb', 'cover_big', $game['cover']['url'])
+                : 'https://via.placeholder.com/264x352',
+            'genres' => isset($game['genres']) 
+                ? collect($game['genres'])->pluck('name')->implode(', ')
+                : 'N/A',
+            'involved_companies' => isset($game['involved_companies'])
+                ? collect($game['involved_companies'])->pluck('company')->pluck('name')->implode(', ')
+                : "N/A",
+            'platforms' => isset($game['platforms']) 
+                ? collect($game['platforms'])->pluck('abbreviation')->implode(', ') 
+                : 'N/A',
+            'memberRating' => isset($game['rating']) 
+                ? round($game['rating'])
+                : '0',
+            'criticRating' => isset($game['aggregated_rating']) 
+                ? round($game['aggregated_rating']) 
+                : '0',
+            'trailer' => isset($game['videos'])
+                ? "https://youtube.com/embed/" . $game['videos'][0]['video_id']
+                : "",
+            'screenshots' => isset($game['screenshots']) 
+                ? collect($game['screenshots'])->map(function ($screenshot) {
                     return [
-                        'big' => Str::replaceFirst('thumb','screenshot_big', $screenshot['url']),
-                        'huge' => Str::replaceFirst('thumb','screenshot_huge', $screenshot['url']),
+                        'big' => Str::replaceFirst('thumb', 'screenshot_big', $screenshot['url']),
+                        'huge' => Str::replaceFirst('thumb', 'screenshot_huge', $screenshot['url']),
                     ];
-                })->take(9),
-                'similarGames'=>collect($game['similar_games'])->map(function ($game){
+                })->take(9)
+                : '',
+            'similar_games' => isset($game['similar_games'])
+                ? collect($game['similar_games'])->map(function ($game){
                     return collect($game)->merge([
-                        'coverImageUrl' => array_key_exists('cover',$game) ?
-                        Str::replaceFirst('thumb','cover_big', $game['cover']['url']) : 'https://via.placeholder.com/264x352',
-                       'rating' => isset($game['rating']) ? round($game['rating']) : null,
-                        'platforms' => array_key_exists('platforms', $game) ?
-                        collect($game['platforms'])->pluck('abbreviation')->filter()->implode(', ') : null,
-                    ]);
-                })->take(6),
-                'social'=> [
+                        'coverImageUrl' => isset($game['cover']) 
+                            ? Str::replaceFirst('thumb', 'cover_big', $game['cover']['url']) 
+                            : 'https://via.placeholder.com/264x352',
+                        'rating' => isset($game['rating']) 
+                            ? round($game['rating']) 
+                            : '0',
+                        'platforms' => isset($game['platforms']) 
+                            ? collect($game['platforms'])->pluck('abbreviation')->implode(', ') 
+                            : null,
+                        ]);
+                    })->take(6)
+                : [],
+            'social'=> [
                     'website'=>array_key_exists('websites',$game)?collect($game['websites'])->first():null,
                     'facebook'=>array_key_exists('websites',$game)? collect($game['websites'])->filter(function ($website){
                         return Str::contains($website['url'],'facebook');
@@ -161,10 +181,8 @@ public function index()
                     })->first():null,
                   
                 ]
-                  
-            ]);
-           
-        }
+        ]);
+    }
 
     /**
      * Show the form for editing the specified resource.
